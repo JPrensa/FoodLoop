@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct FoodDetailView: View {
+    let foodId:String
     var body: some View {
             ScrollView {
                 VStack(alignment: .leading) {
@@ -93,5 +94,5 @@ struct FoodDetailView: View {
     }
 
 #Preview {
-    FoodDetailView()
+    FoodDetailView(foodId: "asadsd")
 }

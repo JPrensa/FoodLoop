@@ -1,5 +1,13 @@
+//
+//  AvailableTimeSlot.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 28.02.25.
+//
+import Foundation
+
 struct AvailableTimeSlot: Codable {
-    let day: Int // 0-6 für Wochentage
-    let startTime: Date
-    let endTime: Date
+    var day: Int // 0-6 für Wochentage
+    var startTime: Date
+    var endTime: Date
 }

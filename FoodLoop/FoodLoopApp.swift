@@ -6,12 +6,25 @@
 //
 
 import SwiftUI
+import FirebaseCore
+
 
 @main
-struct FoodLoopApp: App {
+struct Code_SnippetsApp: App {
+    @StateObject private var authViewModel = AuthViewModel()
+
+    init() {
+        FirebaseApp.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if authViewModel.isUserLoggedIn {
+                MainView()
+            } else {
+            
+               AuthView(authViewModel: authViewModel)
+            }
         }
     }
 }

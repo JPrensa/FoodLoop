@@ -1,3 +1,12 @@
+//
+//  PasswordField.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 11.03.25.
+//
+
+import SwiftUI
+
 struct PasswordField: View {
     let title: String
     let placeholder: String

@@ -4,7 +4,8 @@
 //
 //  Created by Jefferson Prensa on 10.03.25.
 //
-
+import SwiftUI
+import MapKit
 
 struct MapFoodDetailCard: View {
     let item: FoodItem

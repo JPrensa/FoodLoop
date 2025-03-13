@@ -4,7 +4,7 @@
 //
 //  Created by Jefferson Prensa on 28.02.25.
 //
-
+import Foundation
 
 struct Message: Identifiable, Codable {
     let id: String

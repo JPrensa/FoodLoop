@@ -1,3 +1,12 @@
+//
+//  FoodCardView.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+
+import SwiftUI
+import MapKit
 // Wiederverwendbare Komponenten
 struct FoodCardView: View {
     let item: FoodItem

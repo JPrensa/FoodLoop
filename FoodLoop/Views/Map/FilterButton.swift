@@ -1,3 +1,12 @@
+//
+//  FilterButton.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+import SwiftUI
+import MapKit
+
 struct FilterButton: View {
     let title: String
     let icon: String

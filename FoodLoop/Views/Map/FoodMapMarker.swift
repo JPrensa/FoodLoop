@@ -1,3 +1,12 @@
+//
+//  FoodMapMarker.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+import SwiftUI
+import MapKit
+
 struct FoodMapMarker: View {
     let item: FoodItem
     let isSelected: Bool

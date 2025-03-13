@@ -1,3 +1,13 @@
+//
+//  SearchBar.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+
+import SwiftUI
+import MapKit
+
 struct SearchBar: View {
     @Binding var text: String
     
@@ -23,3 +33,4 @@ struct SearchBar: View {
         .cornerRadius(10)
     }
 }
+

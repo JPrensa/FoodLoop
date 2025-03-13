@@ -5,6 +5,10 @@
 //  Created by Jefferson Prensa on 28.02.25.
 //
 
+import Foundation
+import Firebase
+import FirebaseAuth
+import FirebaseFirestore
 
 class FoodUploadViewModel: ObservableObject {
     @Published var title = ""

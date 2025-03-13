@@ -1,3 +1,13 @@
+//
+//  UploadView.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+
+
+
+
 import SwiftUI
 import PhotosUI
 
@@ -10,7 +20,7 @@ struct UploadView: View {
     let primaryColor = Color("PrimaryGreen") // Grün
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Bildauswahl
                 Section(header: Text("Foto")) {
@@ -112,7 +122,7 @@ struct UploadView: View {
                 
                 // Verfügbare Abholzeiten
                 Section(header: Text("Verfügbare Abholzeiten")) {
-                    ForEach(0..<min(viewModel.availableTimes.count, 7)) { index in
+                    ForEach(Array(0..<min(viewModel.availableTimes.count, 7)), id: \.self) { index in
                         let timeSlot = viewModel.availableTimes[index]
                         TimeSlotView(
                             day: timeSlot.day,

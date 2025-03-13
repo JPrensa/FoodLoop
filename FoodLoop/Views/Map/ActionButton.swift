@@ -1,3 +1,12 @@
+//
+//  ActionButton.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+import SwiftUI
+import MapKit
+
 struct ActionButton: View {
     let title: String
     let icon: String

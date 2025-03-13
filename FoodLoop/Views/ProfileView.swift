@@ -1,8 +1,18 @@
+//
+//  ProfileView.swift
+//  FoodLoop
+//
+//  Created by Jefferson Prensa on 10.03.25.
+//
+
+
+
+
 import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    @StateObject private var viewModel = UserProfileViewModel()
+    @StateObject private var userProfileviewModel = UserProfileViewModel()
     @State private var showEditProfile = false
     
     let primaryColor = Color("PrimaryGreen")
@@ -10,11 +20,11 @@ struct ProfileView: View {
     let accentColor = Color("AccentCoffee")
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     // Profilheader
-                    ProfileHeaderView(user: viewModel.user, rating: viewModel.userRating)
+                    ProfileHeaderView(user: userProfileviewModel.fireUser, rating: userProfileviewModel.userRating)
                         .padding(.bottom)
                     
                     // Statistiken
@@ -26,7 +36,7 @@ struct ProfileView: View {
                         HStack(spacing: 20) {
                             // Gerettete Lebensmittel
                             StatisticCard(
-                                value: "\(viewModel.foodsSaved)",
+                                value: "\(userProfileviewModel.foodsSaved)",
                                 label: "Gerettete Lebensmittel",
                                 icon: "leaf.fill",
                                 color: primaryColor
@@ -34,7 +44,7 @@ struct ProfileView: View {
                             
                             // Level
                             StatisticCard(
-                                value: viewModel.user?.levelTitle ?? "Einsteiger",
+                                value: userProfileviewModel.fireUser?.levelTitle ?? "Einsteiger",
                                 label: "Aktuelles Level",
                                 icon: "trophy.fill",
                                 color: .yellow
@@ -42,7 +52,7 @@ struct ProfileView: View {
                         }
                         
                         // CO2 Ersparnis (Beispiel)
-                        let co2Saved = Double(viewModel.foodsSaved) * 2.5 // Annahme: 2.5kg CO2 pro Lebensmittel
+                        let co2Saved = Double(userProfileviewModel.foodsSaved) * 2.5 // Annahme: 2.5kg CO2 pro Lebensmittel
                         HStack(spacing: 20) {
                             StatisticCard(
                                 value: String(format: "%.1f kg", co2Saved),
@@ -65,12 +75,12 @@ struct ProfileView: View {
                                         
                                         RoundedRectangle(cornerRadius: 5)
                                             .fill(primaryColor)
-                                            .frame(width: min(CGFloat(viewModel.foodsSaved % 10) / 10.0 * geometry.size.width, geometry.size.width), height: 12)
+                                            .frame(width: min(CGFloat(userProfileviewModel.foodsSaved % 10) / 10.0 * geometry.size.width, geometry.size.width), height: 12)
                                     }
                                 }
                                 .frame(height: 12)
                                 
-                                Text("Noch \(10 - (viewModel.foodsSaved % 10)) für das nächste Level")
+                                Text("Noch \(10 - (userProfileviewModel.foodsSaved % 10)) für das nächste Level")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -120,10 +130,10 @@ struct ProfileView: View {
                                 
                                 Spacer()
                                 
-                                Toggle("", isOn: $viewModel.isDarkMode)
+                                Toggle("", isOn: $userProfileviewModel.isDarkMode)
                                     .toggleStyle(SwitchToggleStyle(tint: primaryColor))
-                                    .onChange(of: viewModel.isDarkMode) { newValue in
-                                        viewModel.toggleDarkMode()
+                                    .onChange(of: userProfileviewModel.isDarkMode) { newValue in
+                                        userProfileviewModel.toggleDarkMode()
                                     }
                                     .padding(.trailing)
                             }
@@ -173,7 +183,9 @@ struct ProfileView: View {
                     
                     // Abmelden-Button
                     Button(action: {
-                        authViewModel.signOut()
+                        Task {
+                          await  authViewModel.signOut()
+                        }
                     }) {
                         Text("Abmelden")
                             .fontWeight(.semibold)
@@ -197,10 +209,10 @@ struct ProfileView: View {
             .navigationTitle("Profil")
             .background(Color(.systemGroupedBackground))
             .sheet(isPresented: $showEditProfile) {
-                EditProfileView(user: viewModel.user)
+                EditProfileView(user: userProfileviewModel.fireUser)
             }
             .onAppear {
-                viewModel.fetchUserProfile()
+                userProfileviewModel.fetchUserProfile()
             }
         }
     }
@@ -208,7 +220,7 @@ struct ProfileView: View {
 
 // Profilheader-Ansicht
 struct ProfileHeaderView: View {
-    let user: User?
+    let user: FireUser?
     let rating: Double?
     
     var body: some View {
@@ -347,7 +359,7 @@ struct SettingsRowView: View {
 
 // Profilbearbeitung
 struct EditProfileView: View {
-    let user: User?
+    let user: FireUser?
     @Environment(\.presentationMode) var presentationMode
     @State private var username: String = ""
     @State private var email: String = ""
@@ -435,7 +447,7 @@ struct EditProfileView: View {
                 // Daten aus dem User-Objekt laden
                 if let user = user {
                     username = user.username
-                    email = user.email
+                    email = user.email ?? ""
                     phoneNumber = user.phoneNumber ?? ""
                 }
             }
