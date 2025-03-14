@@ -14,6 +14,7 @@ struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var userProfileviewModel = UserProfileViewModel()
     @State private var showEditProfile = false
+    @State private var isLoggingOut = false
     
     let primaryColor = Color("PrimaryGreen")
     let secondaryColor = Color("SecondaryWhite")
@@ -182,19 +183,37 @@ struct ProfileView: View {
                     .padding(.horizontal)
                     
                     // Abmelden-Button
-                    Button(action: {
+                    Button {
+                        isLoggingOut = true
                         Task {
-                          await  authViewModel.signOut()
+                            await  authViewModel.signOut()
+                            isLoggingOut = false
                         }
-                    }) {
-                        Text("Abmelden")
+                    } label: {
+                        if isLoggingOut {
+                            HStack {
+                                Text("Abmelden...")
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .padding(.leading, 4)
+                            }
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                             .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
-                            .background(Color.red)
+                            .background(Color.red.opacity(0.7))
                             .cornerRadius(12)
+                        } else {
+                            Text("Abmelden")
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 16)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.red)
+                                .cornerRadius(12)
+                        }
                     }
+                    .disabled(isLoggingOut)
                     .padding(.horizontal)
                     .padding(.top, 20)
                     

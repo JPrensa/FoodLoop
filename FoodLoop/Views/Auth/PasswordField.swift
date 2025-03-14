@@ -45,7 +45,7 @@ struct PasswordField: View {
 }
 
 // Hilfstruktur für Fehlermeldungen
-struct AuthError: Identifiable {
-    let id = UUID()
-    let message: String
-}
+//struct AuthError: Identifiable {
+//    let id = UUID()
+//    let message: String
+//}

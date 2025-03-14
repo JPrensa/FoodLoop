@@ -20,7 +20,7 @@ struct Code_SnippetsApp: App {
     var body: some Scene {
         WindowGroup {
             if authViewModel.isUserLoggedIn {
-                MainView()
+                MainView(authViewModel: authViewModel)
             } else {
             
                AuthView(authViewModel: authViewModel)
