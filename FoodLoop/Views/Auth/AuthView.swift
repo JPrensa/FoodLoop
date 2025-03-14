@@ -33,7 +33,7 @@ struct AuthView: View {
                             .font(.system(size: 70))
                             .foregroundColor(primaryColor)
                         
-                        Text("Food Rescue")
+                        Text("Food Loop")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(primaryColor)
@@ -204,7 +204,7 @@ struct AuthView: View {
     }
 }
 
-// Hilfstruktur für Fehlermeldungen, falls noch nicht definiert
+
 struct AuthError: Identifiable {
     let id = UUID()
     let message: String

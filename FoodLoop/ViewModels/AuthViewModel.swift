@@ -28,10 +28,10 @@ class AuthViewModel: ObservableObject {
     
     
     
-    func createUser(id: String, email: String?) async {
-        let newUser = FireUser(
+    func createUser(id: String, email: String?, username: String = "Neuer Nutzer") async {
+            let newUser = FireUser(
                 id: id,
-                username: "Neuer Nutzer",
+                username: username,
                 email: email,
                 location: nil,
                 profileImageURL: nil,
@@ -46,6 +46,7 @@ class AuthViewModel: ObservableObject {
     do {
                try database.collection("users").document(id).setData(from: newUser)
                fetchUser(id: id)
+        self.fireUser = newUser
            } catch {
                self.errorMessage = "Fehler beim Speichern: \(error.localizedDescription)"
            }
@@ -64,18 +65,24 @@ class AuthViewModel: ObservableObject {
     // Funktion zum Laden des Users aus Firestore
     func fetchUser(id: String) {
         database.collection("users").document(id).getDocument { document, error in
-            if let error {
-                print(error)
+            if let error = error {
+                print("Fehler beim Laden des Benutzers: \(error.localizedDescription)")
+                self.errorMessage = "Fehler beim Laden des Benutzers"
                 return
             }
             
-            guard let document else { return }
-            
+            guard let document = document, document.exists else {
+                print("Benutzer-Dokument nicht gefunden")
+                return
+            }
             do {
                 let firestoreResult = try document.data(as: FireUser.self)
-                self.fireUser = firestoreResult
-            } catch {
-                print("Dokument ist kein User")
+                                DispatchQueue.main.async {
+                                    self.fireUser = firestoreResult
+                                }
+                            } catch {
+                                print("Fehler beim Dekodieren des Benutzers: \(error.localizedDescription)")
+                                self.errorMessage = "Fehler beim Laden des Benutzerprofils"
             }
         }
     }
@@ -94,33 +101,44 @@ class AuthViewModel: ObservableObject {
     
     // Login mit E-Mail & Passwort
     func login(email: String, password: String) async {
+          self.isLoading = true
+          self.errorMessage = nil
         do {
             let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
             self.user = authResult.user
         } catch {
             self.errorMessage = "Fehler: \(error.localizedDescription)"
+            self.isLoading = false
         }
     }
 
     // Registrierung mit E-Mail & Passwort
     func register(email: String, password: String) async {
+         self.isLoading = true
+         self.errorMessage = nil
         do {
             let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
             self.user = authResult.user
+            self.isLoading = false
             await createUser(id: authResult.user.uid, email: email)
         } catch {
             self.errorMessage = "Fehler: \(error.localizedDescription)"
+            self.isLoading = false
         }
     }
 
     // Logout
     func signOut() async {
+        self.isLoading = true
+        self.errorMessage = nil
         do {
             try Auth.auth().signOut()
             self.user = nil
             self.fireUser = nil
+            self.isLoading = false
         } catch {
-            self.errorMessage = "Fehler: \(error.localizedDescription)"
+            self.errorMessage = "Abmeldung fehlgeschlagen: \(error.localizedDescription)"
+            self.isLoading = false
         }
     }
 
@@ -128,20 +146,5 @@ class AuthViewModel: ObservableObject {
     var isUserLoggedIn: Bool {
         return user != nil
     }
-//    // Prüfen, ob ein User eingeloggt ist
-//    var isUserLoggedIn: Bool {
-//        return user != nil
-//    }
-//    
-//    func signInWithGoogle() {
-//        // Firebase Google Anmeldung
-//    }
-//    
-//    func signOut() {
-//        // Abmelden
-//    }
-//    
-//    func updateUserProfile(_ updatedUser: User) {
-//        // Aktualisieren des Nutzerprofils
-//    }
+
 }
