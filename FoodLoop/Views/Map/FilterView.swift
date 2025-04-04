@@ -1,4 +1,5 @@
-// Detaillierte Filteransicht als Sheet
+import SwiftUI
+
 struct FilterView: View {
     @Binding var selectedCategories: Set<String>
     @Binding var radiusInKm: Double

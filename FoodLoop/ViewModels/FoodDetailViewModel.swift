@@ -11,7 +11,7 @@ import FirebaseFirestore
 
 class FoodDetailViewModel: ObservableObject {
     @Published var foodItem: FoodItem?
-    @Published var owner: User?
+    @Published var owner: FireUser?
     @Published var isLoading = false
     @Published var errorMessage: String?
     

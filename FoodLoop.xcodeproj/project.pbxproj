@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9A16D1D32D9E71EE0007A8E1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9A16D1D22D9E71EE0007A8E1 /* FirebaseStorage */; };
 		9AD153AF2D689CDC000A9739 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD153AE2D689CDC000A9739 /* FirebaseAuth */; };
 		9AD153B12D689CF1000A9739 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD153B02D689CF1000A9739 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
@@ -49,6 +50,7 @@
 			files = (
 				9AD153AF2D689CDC000A9739 /* FirebaseAuth in Frameworks */,
 				9AD153B12D689CF1000A9739 /* FirebaseFirestore in Frameworks */,
+				9A16D1D32D9E71EE0007A8E1 /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,6 +119,7 @@
 			packageProductDependencies = (
 				9AD153AE2D689CDC000A9739 /* FirebaseAuth */,
 				9AD153B02D689CF1000A9739 /* FirebaseFirestore */,
+				9A16D1D22D9E71EE0007A8E1 /* FirebaseStorage */,
 			);
 			productName = FoodLoop;
 			productReference = 9A8D2BBB2D64C16400B2A1B1 /* FoodLoop.app */;
@@ -400,6 +403,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"FoodLoop/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Wird benötig, um Routen zu berechnen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +436,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"FoodLoop/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Wird benötig, um Routen zu berechnen.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -575,6 +580,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		9A16D1D22D9E71EE0007A8E1 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AD153A82D666F29000A9739 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		9AD153AE2D689CDC000A9739 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9AD153A82D666F29000A9739 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

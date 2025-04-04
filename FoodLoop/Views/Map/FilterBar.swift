@@ -1,4 +1,5 @@
-// FilterBar für schnellen Zugriff auf Filter
+import SwiftUI
+ 
 struct FilterBar: View {
     @Binding var selectedCategories: Set<String>
     @Binding var radiusInKm: Double

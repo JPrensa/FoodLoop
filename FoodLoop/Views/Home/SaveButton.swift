@@ -70,12 +70,12 @@ struct SaveButton: View {
                     if var updatedUser = authViewModel.fireUser {
                         if isSaved {
                             // Element zu Favoriten hinzufügen
-                            if !updatedUser.savedItems!.contains(foodItem.id) {
-                                updatedUser.savedItems?.append(foodItem.id)
+                            if !updatedUser.savedItems.contains(foodItem.id) {
+                                updatedUser.savedItems.append(foodItem.id)
                             }
                         } else {
                             // Element aus Favoriten entfernen
-                            updatedUser.savedItems?.removeAll(where: { $0 == foodItem.id })
+                            updatedUser.savedItems.removeAll(where: { $0 == foodItem.id })
                         }
                         
                         // AuthViewModel mit dem aktualisierten Benutzer aktualisieren
@@ -83,7 +83,7 @@ struct SaveButton: View {
                         // authViewModel.updateUserProfile(updatedUser)
                     }
                     
-                    // Feedback für den Benutzer (optional)
+                    
                     let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
                     feedbackGenerator.impactOccurred()
                 }

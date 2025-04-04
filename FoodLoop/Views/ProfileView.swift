@@ -1,11 +1,11 @@
+////
+////  ProfileView.swift
+////  Food
+////
+////  Created by Jefferson Prensa on 03.03.25.
+////
 //
-//  ProfileView.swift
-//  Food
 //
-//  Created by Jefferson Prensa on 03.03.25.
-//
-
-
 import SwiftUI
 
 struct ProfileView: View {
@@ -22,7 +22,7 @@ struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Profilheader
-                    ProfileHeaderView(user: viewModel.user, rating: viewModel.userRating)
+                    ProfileHeaderView(user: viewModel.fireUser, rating: viewModel.userRating)
                         .padding(.bottom)
                     
                     // Statistiken
@@ -42,7 +42,7 @@ struct ProfileView: View {
                             
                             // Level
                             StatisticCard(
-                                value: viewModel.user?.levelTitle ?? "Einsteiger",
+                                value: viewModel.fireUser?.levelTitle ?? "Einsteiger",
                                 label: "Aktuelles Level",
                                 icon: "trophy.fill",
                                 color: .yellow
@@ -181,7 +181,9 @@ struct ProfileView: View {
                     
                     // Abmelden-Button
                     Button(action: {
-                        authViewModel.signOut()
+                        Task{
+                            await authViewModel.signOut()
+                        }
                     }) {
                         Text("Abmelden")
                             .fontWeight(.semibold)
@@ -205,7 +207,7 @@ struct ProfileView: View {
             .navigationTitle("Profil")
             .background(Color(.systemGroupedBackground))
             .sheet(isPresented: $showEditProfile) {
-                EditProfileView(user: viewModel.user)
+                EditProfileView(user: viewModel.fireUser)
             }
             .onAppear {
                 viewModel.fetchUserProfile()
@@ -216,7 +218,7 @@ struct ProfileView: View {
 
 // Profilheader-Ansicht
 struct ProfileHeaderView: View {
-    let user: User?
+    let user: FireUser?
     let rating: Double?
     
     var body: some View {
@@ -355,7 +357,7 @@ struct SettingsRowView: View {
 
 // Profilbearbeitung
 struct EditProfileView: View {
-    let user: User?
+    let user: FireUser?
     @Environment(\.presentationMode) var presentationMode
     @State private var username: String = ""
     @State private var email: String = ""
@@ -443,7 +445,7 @@ struct EditProfileView: View {
                 // Daten aus dem User-Objekt laden
                 if let user = user {
                     username = user.username
-                    email = user.email
+                    email = user.email ?? ""
                     phoneNumber = user.phoneNumber ?? ""
                 }
             }
