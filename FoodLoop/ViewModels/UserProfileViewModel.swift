@@ -16,6 +16,7 @@ class UserProfileViewModel: ObservableObject {
     @Published var foodsSaved = 0
     @Published var userRating: Double?
     @Published var isDarkMode = false
+    @Published var userItems: [FoodItem] = []
     let database = Firestore.firestore()
     
     init() {
@@ -126,7 +127,32 @@ var isUserLoggedIn: Bool {
     return user != nil
 }
     
-    
+    // Lade alle aktiven Uploads des aktuellen Users
+    @MainActor
+    func fetchUserItems() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            let snapshot = try await database.collection("foodItems")
+                .whereField("ownerId", isEqualTo: uid)
+                .whereField("isAvailable", isEqualTo: true)
+                .getDocuments()
+            let items = snapshot.documents.compactMap { try? $0.data(as: FoodItem.self) }
+            self.userItems = items
+        } catch {
+            self.errorMessage = "Fehler beim Laden deiner Uploads: \(error.localizedDescription)"
+        }
+    }
+
+    // Entferne ein Upload (lösche Firestore-Dokument)
+    @MainActor
+    func removeItem(_ item: FoodItem) async {
+        do {
+            try await database.collection("foodItems").document(item.id).delete()
+            self.userItems.removeAll { $0.id == item.id }
+        } catch {
+            self.errorMessage = "Fehler beim Entfernen: \(error.localizedDescription)"
+        }
+    }
     
     func fetchUserProfile() {
         // Laden des Nutzerprofils

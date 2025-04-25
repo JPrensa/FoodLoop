@@ -12,6 +12,7 @@ import MapKit
 struct MainView: View {
     @ObservedObject var authViewModel: AuthViewModel
     @State private var selectedTab = 0
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     let primaryColor = Color("PrimaryGreen")
     let secondaryColor = Color("SecondaryWhite")
@@ -27,31 +28,31 @@ struct MainView: View {
             
             MapView()
                 .tabItem {
-                    Label("Karte", systemImage: "map.fill")
+                    Label("Map", systemImage: "map.fill")
                 }
                 .tag(1)
             
             UploadView()
                 .tabItem {
-                    Label("Teilen", systemImage: "plus.circle.fill")
+                    Label("Share", systemImage: "plus.circle.fill")
                 }
                 .tag(2)
             
             SavedItemsView()
                 .tabItem {
-                    Label("Favoriten", systemImage: "heart.fill")
+                    Label("Favorites", systemImage: "heart.fill")
                 }
                 .tag(3)
             
             ProfileView()
                 .tabItem {
-                    Label("Profil", systemImage: "person.fill")
+                    Label("Profile", systemImage: "person.fill")
                 }
                 .tag(4)
        }
-        .accentColor(primaryColor)
-    
+        .tint(primaryColor)
         .environmentObject(authViewModel)
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 }
 

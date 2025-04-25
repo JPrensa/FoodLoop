@@ -5,13 +5,13 @@
 //  Created by Jefferson Prensa on 28.02.25.
 //
 
-
 import Foundation
 import Firebase
 import FirebaseFirestore
 import FirebaseStorage
 import SwiftUI
 import CoreLocation
+import Combine
 
 class FoodUploadViewModel: ObservableObject {
     // Form-Daten
@@ -21,6 +21,8 @@ class FoodUploadViewModel: ObservableObject {
     @Published var image: UIImage?
     @Published var expiryDate: Date? = Calendar.current.date(byAdding: .day, value: 3, to: Date())
     @Published var availableTimes: [AvailableTimeSlot] = []
+    @Published var suggestedImages: [ImgurImage] = []
+    @Published var selectedImgurImageLink: String?
     
     // Daten für UI-Steuerung
     @Published var categories: [FoodCategory] = []
@@ -37,6 +39,7 @@ class FoodUploadViewModel: ObservableObject {
     private let db = Firestore.firestore()
     private let storage = Storage.storage().reference()
     private let locationManager = CLLocationManager()
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
         // Standardmäßig einen Zeitslot für heute hinzufügen
@@ -52,9 +55,18 @@ class FoodUploadViewModel: ObservableObject {
             )
         ]
         
-        // Kategorien laden
+        // Initial default categories and load from Firestore
+        createDefaultCategories()
         fetchCategories()
         
+        // Setup Imgur search on title changes
+        $title
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] newTitle in
+                Task { await self?.searchImgur(query: newTitle) }
+            }
+            .store(in: &cancellables)
     }
     
     // Kategorien aus Firestore laden
@@ -85,10 +97,16 @@ class FoodUploadViewModel: ObservableObject {
                     // Wenn keine gültigen Kategorien in Firestore vorhanden sind, Standard-Kategorien erstellen
                     self?.createDefaultCategories()
                 } else {
-                    self?.categories = categories
+                    // Entferne Duplikate (einzigartige Kategorien nach Name)
+                    let uniqueCategories = categories.reduce(into: [FoodCategory]()) { acc, cat in
+                        if !acc.contains(where: { $0.name == cat.name }) {
+                            acc.append(cat)
+                        }
+                    }
+                    self?.categories = uniqueCategories
                     
                     // Standardmäßig die erste Kategorie auswählen
-                    if self?.selectedCategory == nil, let firstCategory = categories.first {
+                    if self?.selectedCategory == nil, let firstCategory = uniqueCategories.first {
                         self?.selectedCategory = firstCategory
                     }
                 }
@@ -96,17 +114,21 @@ class FoodUploadViewModel: ObservableObject {
         }
     }
     
-    
     private func createDefaultCategories() {
         let defaultCategories = [
             FoodCategory(id: UUID().uuidString, name: "Obst & Gemüse", icon: "leaf.fill"),
             FoodCategory(id: UUID().uuidString, name: "Backwaren", icon: "birthday.cake"),
             FoodCategory(id: UUID().uuidString, name: "Milchprodukte", icon: "drop.fill"),
             FoodCategory(id: UUID().uuidString, name: "Fertiggerichte", icon: "fork.knife"),
-            FoodCategory(id: UUID().uuidString, name: "Konserven", icon: "shippingbox.fill"),
-            FoodCategory(id: UUID().uuidString, name: "Getränke", icon: "cup.and.saucer.fill"),
-            FoodCategory(id: UUID().uuidString, name: "Sonstiges", icon: "ellipsis.circle.fill")
+            FoodCategory(id: UUID().uuidString, name: "Konserven", icon: "shippingbox.fill")
         ]
+        
+        self.categories = defaultCategories
+        
+        // Standardmäßig die erste Kategorie auswählen
+        if self.selectedCategory == nil, let firstCategory = defaultCategories.first {
+            self.selectedCategory = firstCategory
+        }
         
         // Kategorien in Firestore speichern
         for category in defaultCategories {
@@ -114,15 +136,6 @@ class FoodUploadViewModel: ObservableObject {
                 try db.collection("categories").document(category.id).setData(from: category)
             } catch {
                 print("Fehler beim Speichern der Kategorie: \(error)")
-            }
-        }
-        
-        DispatchQueue.main.async {
-            self.categories = defaultCategories
-            
-            // Standardmäßig die erste Kategorie auswählen
-            if self.selectedCategory == nil, let firstCategory = defaultCategories.first {
-                self.selectedCategory = firstCategory
             }
         }
     }
@@ -206,8 +219,12 @@ class FoodUploadViewModel: ObservableObject {
                     }
                 }
             }
+        } else if let imgurLink = selectedImgurImageLink {
+            // Nutze den Imgur-Link direkt
+            self.uploadProgress = 0.5
+            self.uploadFoodData(userId: userId, imageURL: imgurLink)
         } else {
-            // Wenn kein Bild vorhanden ist, direkt die Daten hochladen
+            // Kein Bild vorhanden
             self.uploadProgress = 0.5
             self.uploadFoodData(userId: userId, imageURL: nil)
         }
@@ -378,333 +395,21 @@ class FoodUploadViewModel: ObservableObject {
         uploadProgress = 0.0
         uploadSuccess = false
     }
+    
+    /// Search images on Imgur based on title
+    func searchImgur(query: String) async {
+        guard !query.isEmpty else {
+            DispatchQueue.main.async { self.suggestedImages = [] }
+            return
+        }
+        do {
+            let all = try await ImgurService.shared.searchImages(query: query)
+            let limited = Array(all.shuffled().prefix(8))
+            DispatchQueue.main.async {
+                self.suggestedImages = limited
+            }
+        } catch {
+            print("Error fetching Imgur images: \(error)")
+        }
+    }
 }
-//import Foundation
-//import Firebase
-//import FirebaseAuth
-//import FirebaseFirestore
-//import CoreLocation
-//
-//class FoodUploadViewModel: NSObject, ObservableObject {
-//    // Formulardaten
-//    @Published var title = ""
-//    @Published var foodDescription = ""
-//    @Published var selectedCategory: FoodCategory?
-//    @Published var image: UIImage?
-//    @Published var imageURL: String? // Für Imgur-Bilder
-//    @Published var expiryDate: Date?
-//    @Published var availableTimes: [AvailableTimeSlot] = []
-//    
-//    // UI-State
-//    @Published var isUploading = false
-//    @Published var uploadProgress: Double = 0.0
-//    @Published var errorMessage: String?
-//    @Published var uploadSuccess = false
-//    @Published var showLocationPrompt = false
-//    @Published var showingImgurPicker = false
-//    
-//    // Locationdaten
-//    @Published var userLocation: CLLocation?
-//    @Published var locationName = "Aktueller Standort wird geladen..."
-//    
-//    // Daten aus Firestore
-//    @Published var categories: [FoodCategory] = []
-//    
-//    private let db = Firestore.firestore()
-//    private let locationManager = CLLocationManager()
-//    private let geocoder = CLGeocoder()
-//    
-////    override init() {
-////        setupLocationManager()
-////    }
-//    
-//    // Prüft, ob das Formular gültig ist
-//    var isFormValid: Bool {
-//        !title.isEmpty &&
-//        !description.isEmpty &&
-//        selectedCategory != nil &&
-//        (image != nil || imageURL != nil) &&
-//        userLocation != nil
-//    }
-//    
-//    // Kategorien aus Firestore laden
-//    func fetchCategories() {
-//        db.collection("categories").getDocuments { [weak self] snapshot, error in
-//            guard let self = self else { return }
-//            
-//            if let error = error {
-//                self.errorMessage = "Fehler beim Laden der Kategorien: \(error.localizedDescription)"
-//                return
-//            }
-//            
-//            guard let documents = snapshot?.documents else {
-//                self.errorMessage = "Keine Kategorien gefunden"
-//                return
-//            }
-//            
-//            self.categories = documents.compactMap { document -> FoodCategory? in
-//                try? document.data(as: FoodCategory.self)
-//            }
-//            
-//            // Fallback, wenn keine Kategorien in Firestore sind
-//            if self.categories.isEmpty {
-//                self.createDefaultCategories()
-//            }
-//        }
-//    }
-//    
-//    // Standard-Kategorien erstellen, falls keine in Firestore existieren
-//    private func createDefaultCategories() {
-//        let defaultCategories = [
-//            FoodCategory(id: "fruits_vegetables", name: "Obst & Gemüse", icon: "leaf.fill"),
-//            FoodCategory(id: "bakery", name: "Backwaren", icon: "birthday.cake"),
-//            FoodCategory(id: "dairy", name: "Milchprodukte", icon: "drop.fill"),
-//            FoodCategory(id: "ready_meals", name: "Fertiggerichte", icon: "fork.knife"),
-//            FoodCategory(id: "beverages", name: "Getränke", icon: "cup.and.saucer.fill"),
-//            FoodCategory(id: "other", name: "Sonstiges", icon: "shippingbox.fill")
-//        ]
-//        
-//        self.categories = defaultCategories
-//        
-//        // Optional: Kategorien in Firestore speichern
-//        for category in defaultCategories {
-//            do {
-//                try db.collection("categories").document(category.id).setData(from: category)
-//            } catch {
-//                print("Fehler beim Speichern der Kategorie: \(error)")
-//            }
-//        }
-//    }
-//    
-//    // Standortmanager einrichten
-//    private func setupLocationManager() {
-//        locationManager.delegate = self
-//        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-//    }
-//    
-//    // Standort anfordern
-//    func requestLocation() {
-//        let status = locationManager.authorizationStatus
-//        
-//        if status == .notDetermined {
-//            locationManager.requestWhenInUseAuthorization()
-//        } else if status == .authorizedWhenInUse || status == .authorizedAlways {
-//            locationManager.requestLocation()
-//        } else {
-//            showLocationPrompt = true
-//        }
-//    }
-//    
-//    // Lebensmittel hochladen
-//    func uploadFoodItem(userId: String) {
-//        guard isFormValid else {
-//            errorMessage = "Bitte fülle alle Pflichtfelder aus"
-//            return
-//        }
-//        
-//        isUploading = true
-//        uploadProgress = 0.1
-//        
-//        
-//        if let image = image {
-//            Task {
-//                do {
-//                    
-//                    if imageURL == nil {
-//                        uploadProgress = 0.2
-//                        let url = try await ImgurService.uploadImage(image)
-//                        await MainActor.run {
-//                            self.imageURL = url
-//                            self.uploadProgress = 0.5
-//                        }
-//                    }
-//                    
-//                    
-//                    await MainActor.run {
-//                        self.saveItemToFirestore(userId: userId)
-//                    }
-//                } catch {
-//                    await MainActor.run {
-//                        self.isUploading = false
-//                        self.errorMessage = "Fehler beim Hochladen des Bildes: \(error.localizedDescription)"
-//                    }
-//                }
-//            }
-//        } else if imageURL != nil {
-//           
-//            uploadProgress = 0.5
-//            saveItemToFirestore(userId: userId)
-//        } else {
-//            isUploading = false
-//            errorMessage = "Bitte wähle ein Bild aus"
-//        }
-//    }
-//    
-//    
-//    private func saveItemToFirestore(userId: String) {
-//        uploadProgress = 0.6
-//        
-//        guard let userLocation = userLocation,
-//              let selectedCategory = selectedCategory,
-//              let imageURL = imageURL else {
-//            isUploading = false
-//            errorMessage = "Es fehlen erforderliche Daten"
-//            return
-//        }
-//        
-//       
-//        let foodItemId = UUID().uuidString
-//        let newLocation = Location(
-//            latitude: userLocation.coordinate.latitude,
-//            longitude: userLocation.coordinate.longitude,
-//            address: locationName
-//        )
-//        
-//        let newItem = FoodItem(
-//            id: foodItemId,
-//            ownerId: userId,
-//            title: title,
-//            description: description,
-//            category: selectedCategory,
-//            imageURL: imageURL,
-//            location: newLocation,
-//            createdAt: Date(),
-//            expiryDate: expiryDate,
-//            availableTimes: availableTimes,
-//            isAvailable: true,
-//            ratings: []
-//        )
-//        
-//        uploadProgress = 0.8
-//        
-//        // In Firestore speichern
-//        do {
-//            try db.collection("foodItems").document(foodItemId).setData(from: newItem)
-//            
-//            
-//            let userRef = db.collection("users").document(userId)
-//            db.runTransaction({ (transaction, errorPointer) -> Any? in
-//                let userDocument: DocumentSnapshot
-//                do {
-//                    userDocument = try transaction.getDocument(userRef)
-//                } catch let fetchError as NSError {
-//                    errorPointer?.pointee = fetchError
-//                    return nil
-//                }
-//                
-//                if let userData = userDocument.data(),
-//                   let currentSaved = userData["foodsSaved"] as? Int {
-//                    let newSavedCount = currentSaved + 1
-//                    
-//                    
-//                    let newLevel = newSavedCount / 10
-//                    
-//                    transaction.updateData([
-//                        "foodsSaved": newSavedCount,
-//                        "level": newLevel
-//                    ], forDocument: userRef)
-//                }
-//                
-//                return nil
-//            }) { [weak self] (_, error) in
-//                guard let self = self else { return }
-//                
-//                DispatchQueue.main.async {
-//                    self.uploadProgress = 1.0
-//                    self.isUploading = false
-//                    
-//                    if let error = error {
-//                        self.errorMessage = "Fehler beim Aktualisieren der Benutzerstatistik: \(error.localizedDescription)"
-//                    } else {
-//                        
-//                        self.uploadSuccess = true
-//                        self.resetForm()
-//                    }
-//                }
-//            }
-//        } catch {
-//            isUploading = false
-//            errorMessage = "Fehler beim Speichern des Lebensmittels: \(error.localizedDescription)"
-//        }
-//    }
-//    
-//    
-//    func searchImgurImagesBasedOnTitle() -> ImgurImagePickerView {
-//        let searchTerm = title.isEmpty ? nil : title
-//        let categoryName = selectedCategory?.name
-//        
-//        return ImgurImagePickerView(
-////            searchTerm: searchTerm ?? "",
-////            category: categoryName,
-//            onImageSelected: { imgurUrl in
-//                self.imageURL = imgurUrl
-//                self.image = nil // Lokales Bild zurücksetzen
-//            }
-//        )
-//    }
-//    
-//    // Formular zurücksetzen
-//    private func resetForm() {
-//        title = ""
-//        foodDescription = ""
-//        selectedCategory = nil
-//        image = nil
-//        imageURL = nil
-//        expiryDate = nil
-//        availableTimes = []
-//    }
-//}
-//
-//// MARK: - CLLocationManagerDelegate
-//extension FoodUploadViewModel: CLLocationManagerDelegate {
-//    
-//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        guard let location = locations.last else { return }
-//        
-//        userLocation = location
-//        
-//        // Adresse über Geocoding ermitteln
-//        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-//            guard let self = self else { return }
-//            
-//            if let error = error {
-//                self.locationName = "Standort nicht verfügbar"
-//                print("Geocoding-Fehler: \(error.localizedDescription)")
-//                return
-//            }
-//            
-//            if let placemark = placemarks?.first {
-//                // Adresse formatieren
-//                let address = [
-//                    placemark.thoroughfare,
-//                    placemark.postalCode,
-//                    placemark.locality
-//                ].compactMap { $0 }.joined(separator: ", ")
-//                
-//                if !address.isEmpty {
-//                    self.locationName = address
-//                } else {
-//                    self.locationName = "Standort verfügbar"
-//                }
-//            } else {
-//                self.locationName = "Standort verfügbar"
-//            }
-//        }
-//    }
-//    
-//    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-//        print("Standortfehler: \(error.localizedDescription)")
-//        locationName = "Standort nicht verfügbar"
-//    }
-//    
-//    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-//        let status = manager.authorizationStatus
-//        
-//        if status == .authorizedWhenInUse || status == .authorizedAlways {
-//            locationManager.requestLocation()
-//        } else if status == .denied || status == .restricted {
-//            locationName = "Standort nicht verfügbar"
-//            showLocationPrompt = true
-//        }
-//    }
-//}

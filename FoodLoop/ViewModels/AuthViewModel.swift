@@ -20,6 +20,13 @@ class AuthViewModel: ObservableObject {
     init() {
         Task {
             await checkIfUserExists()
+            if let currentUser = Auth.auth().currentUser {
+                // Lade FireUser-Daten aus Firestore
+                fetchUser(id: currentUser.uid)
+            } else {
+                // Wenn kein eingeloggter User, anonym anmelden für Firestore-Lesezugriff
+                await signInAnonymously()
+            }
         }
     }
   

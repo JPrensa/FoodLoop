@@ -67,20 +67,17 @@ struct SaveButton: View {
                     isSaved.toggle()
                     
                     // Auch den FireUser in AuthViewModel aktualisieren
-                    if var updatedUser = authViewModel.fireUser {
+                    if var user = authViewModel.fireUser {
                         if isSaved {
                             // Element zu Favoriten hinzufügen
-                            if !updatedUser.savedItems.contains(foodItem.id) {
-                                updatedUser.savedItems.append(foodItem.id)
+                            if !user.savedItems.contains(foodItem.id) {
+                                user.savedItems.append(foodItem.id)
                             }
                         } else {
                             // Element aus Favoriten entfernen
-                            updatedUser.savedItems.removeAll(where: { $0 == foodItem.id })
+                            user.savedItems.removeAll(where: { $0 == foodItem.id })
                         }
-                        
-                        // AuthViewModel mit dem aktualisierten Benutzer aktualisieren
-                        // Hinweis: Diese Methode muss im AuthViewModel existieren
-                        // authViewModel.updateUserProfile(updatedUser)
+                        authViewModel.fireUser = user
                     }
                     
                     

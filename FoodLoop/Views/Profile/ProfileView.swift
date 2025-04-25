@@ -12,6 +12,8 @@ struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var viewModel = UserProfileViewModel()
     @State private var showEditProfile = false
+    @State private var showMyUploads = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     let primaryColor = Color("PrimaryGreen")
     let secondaryColor = Color("SecondaryWhite")
@@ -39,6 +41,8 @@ struct ProfileView: View {
                                 icon: "leaf.fill",
                                 color: primaryColor
                             )
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 120)
                             
                             // Level
                             StatisticCard(
@@ -47,19 +51,13 @@ struct ProfileView: View {
                                 icon: "trophy.fill",
                                 color: .yellow
                             )
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 120)
                         }
+                        .frame(maxWidth: .infinity)
                         
-                        // CO2 Ersparnis (Beispiel)
-                        let co2Saved = Double(viewModel.foodsSaved) * 2.5 // Annahme: 2.5kg CO2 pro Lebensmittel
+                        // Level-Fortschritt
                         HStack(spacing: 20) {
-                            StatisticCard(
-                                value: String(format: "%.1f kg", co2Saved),
-                                label: "CO₂ Ersparnis",
-                                icon: "leaf.fill",
-                                color: .green
-                            )
-                            
-                            // Level-Fortschritt
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Level-Fortschritt")
                                     .font(.subheadline)
@@ -83,6 +81,7 @@ struct ProfileView: View {
                                     .foregroundColor(.secondary)
                             }
                             .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.white)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
@@ -108,11 +107,10 @@ struct ProfileView: View {
                                 )
                             }
                             
-                            // Benachrichtigungen
-                            NavigationLink(destination: NotificationsSettingsView()) {
+                            Button(action: { showMyUploads = true }) {
                                 SettingsRowView(
-                                    icon: "bell.fill",
-                                    title: "Benachrichtigungen",
+                                    icon: "tray.full.fill",
+                                    title: "Meine Uploads",
                                     showDivider: true
                                 )
                             }
@@ -125,25 +123,9 @@ struct ProfileView: View {
                                     showDivider: true,
                                     showNavigationIcon: false
                                 )
-                                
                                 Spacer()
-                                
-                                Toggle("", isOn: $viewModel.isDarkMode)
-                                    .toggleStyle(SwitchToggleStyle(tint: primaryColor))
-                                    .onChange(of: viewModel.isDarkMode) { newValue in
-                                        viewModel.toggleDarkMode()
-                                    }
-                                    .padding(.trailing)
-                            }
-                            .contentShape(Rectangle())
-                            
-                            // Suchradius
-                            NavigationLink(destination: SearchRadiusSettingsView()) {
-                                SettingsRowView(
-                                    icon: "location.circle.fill",
-                                    title: "Suchradius",
-                                    showDivider: true
-                                )
+                                Toggle("", isOn: $isDarkMode)
+                                    .labelsHidden()
                             }
                             
                             // Lebensmittelpräferenzen
@@ -209,8 +191,12 @@ struct ProfileView: View {
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView(user: viewModel.fireUser)
             }
+            .sheet(isPresented: $showMyUploads) {
+                MyUploadsView(viewModel: viewModel)
+            }
             .onAppear {
                 viewModel.fetchUserProfile()
+                Task { await viewModel.fetchUserItems() }
             }
         }
     }
@@ -494,14 +480,79 @@ struct FoodPreferencesSettingsView: View {
 
 struct AboutView: View {
     var body: some View {
-        Text("Über uns")
-            .navigationTitle("Über uns")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                
+                Text("Ich habe mich für FoodLoop entschieden, weil ich aktiv gegen Lebensmittelverschwendung vorgehen und gleichzeitig Menschen in meiner Umgebung vernetzen möchte. Jeder Beitrag zählt, um unsere Umwelt zu schützen und Ressourcen zu schonen.")
+                
+                Text("Lebensmittelverlust ist ein globales Problem: Jedes Jahr werden Millionen Tonnen noch genießbarer Nahrungsmittel weggeworfen. Dies führt zu unnötigen CO₂-Emissionen, verschwendetem Wasser und Boden sowie ethischen Fragestellungen hinsichtlich Welthunger.")
+                
+                Text("Mit FoodLoop möchten wir einen einfachen und nachhaltigen Weg bieten, übrig gebliebene Lebensmittel zu teilen statt wegzuwerfen. So können wir gemeinsam Ressourcen sparen, Emissionen reduzieren und die Gemeinschaft stärken.")
+            }
+            .padding()
+        }
+        .navigationTitle("Über uns")
     }
 }
 
 struct HelpSupportView: View {
     var body: some View {
-        Text("Hilfe & Support")
-            .navigationTitle("Hilfe & Support")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Kontakt")
+                    .font(.headline)
+                HStack {
+                    Image(systemName: "envelope.fill")
+                    Text("support@foodloop.com")
+                }
+                HStack {
+                    Image(systemName: "phone.fill")
+                    Text("+49 123 456789")
+                }
+                Text("Erreichbarkeit")
+                    .font(.headline)
+                Text("Montag bis Samstag: 08:00 – 18:00 Uhr")
+            }
+            .padding()
+        }
+        .navigationTitle("Hilfe & Support")
+    }
+}
+
+// MARK: - Meine Uploads View
+struct MyUploadsView: View {
+    @ObservedObject var viewModel: UserProfileViewModel
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationView {
+            List {
+                if viewModel.userItems.isEmpty {
+                    Text("Keine aktiven Uploads")
+                } else {
+                    ForEach(viewModel.userItems) { item in
+                        HStack {
+                            Text(item.title)
+                            Spacer()
+                            Button(role: .destructive) {
+                                Task { await viewModel.removeItem(item) }
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Meine Uploads")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Schließen") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            Task { await viewModel.fetchUserItems() }
+        }
     }
 }

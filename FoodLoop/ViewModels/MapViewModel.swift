@@ -9,6 +9,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 import MapKit
+import CoreLocation
 import Combine
 
 class MapViewModel: ObservableObject {
@@ -25,6 +26,8 @@ class MapViewModel: ObservableObject {
     @Published var radiusInKm: Double = 5.0
     @Published var availableCategories: [FoodCategory] = []
     @Published var showFilters: Bool = false
+    @Published var searchText: String = ""
+    @Published var searchLocation: CLLocationCoordinate2D?
     
     // UI-Steuerung
     @Published var isLoading: Bool = false
@@ -39,7 +42,19 @@ class MapViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        createDefaultCategories()
         setupBindings()
+    }
+    
+    private func createDefaultCategories() {
+        let defaultCategories = [
+            FoodCategory(id: UUID().uuidString, name: "Obst & Gemüse", icon: "leaf.fill"),
+            FoodCategory(id: UUID().uuidString, name: "Backwaren", icon: "birthday.cake"),
+            FoodCategory(id: UUID().uuidString, name: "Milchprodukte", icon: "drop.fill"),
+            FoodCategory(id: UUID().uuidString, name: "Fertiggerichte", icon: "fork.knife"),
+            FoodCategory(id: UUID().uuidString, name: "Konserven", icon: "shippingbox.fill")
+        ]
+        self.availableCategories = defaultCategories
     }
     
     private func setupBindings() {
@@ -89,20 +104,24 @@ class MapViewModel: ObservableObject {
             let categoriesQuery = db.collection("categories")
             let categoriesSnapshot = try await categoriesQuery.getDocuments()
             
-            availableCategories = categoriesSnapshot.documents.compactMap { doc in
+            let loadedCats = categoriesSnapshot.documents.compactMap { doc in
                 try? doc.data(as: FoodCategory.self)
+            }
+            if !loadedCats.isEmpty {
+                self.availableCategories = loadedCats
             }
             
             // Lebensmittel laden
             let query = db.collection("foodItems")
                 .whereField("isAvailable", isEqualTo: true)
-                .order(by: "createdAt", descending: true)
+                //.order(by: "createdAt", descending: true)
             
             let snapshot = try await query.getDocuments()
             
             foodItems = snapshot.documents.compactMap { doc in
                 try? doc.data(as: FoodItem.self)
             }
+            .sorted(by: { $0.createdAt > $1.createdAt })
             
             // Filter anwenden
             applyFilters()
@@ -115,31 +134,35 @@ class MapViewModel: ObservableObject {
     
     // Filter anwenden
     func applyFilters() {
-        // Wenn ein aktueller Standort vorhanden ist, nach Entfernung filtern
-        if let userLocation = locationService.currentLocation {
-            filteredItems = foodItems.filter { item in
-                // Entfernung prüfen
-                let itemLocation = CLLocation(latitude: item.location.latitude, longitude: item.location.longitude)
-                let distance = userLocation.distance(from: itemLocation) / 1000 // km
-                
-                // Kategorie prüfen (wenn keine Kategorien ausgewählt sind, alle anzeigen)
-                let categoryMatch = selectedCategories.isEmpty || selectedCategories.contains(item.category.id)
-                
-                return distance <= radiusInKm && categoryMatch
-            }
-            
-            // Nach Entfernung sortieren
-            filteredItems.sort { item1, item2 in
-                let location1 = CLLocation(latitude: item1.location.latitude, longitude: item1.location.longitude)
-                let location2 = CLLocation(latitude: item2.location.latitude, longitude: item2.location.longitude)
-                
-                return userLocation.distance(from: location1) < userLocation.distance(from: location2)
-            }
+        // Bestimme Zentrum für Filterung
+        let centerCoordinate: CLLocationCoordinate2D
+        if let searchLoc = searchLocation {
+            centerCoordinate = searchLoc
+        } else if let userLoc = locationService.currentLocation {
+            centerCoordinate = userLoc.coordinate
         } else {
-            // Ohne Standort nur nach Kategorie filtern
-            filteredItems = foodItems.filter { item in
-                selectedCategories.isEmpty || selectedCategories.contains(item.category.id)
+            centerCoordinate = region.center
+        }
+        let centerLocation = CLLocation(latitude: centerCoordinate.latitude, longitude: centerCoordinate.longitude)
+        
+        filteredItems = foodItems.filter { item in
+            // Ausschluss eigener Items
+            if let uid = Auth.auth().currentUser?.uid, item.ownerId == uid {
+                return false
             }
+            // Entfernung prüfen
+            let itemLoc = CLLocation(latitude: item.location.latitude, longitude: item.location.longitude)
+            let distance = centerLocation.distance(from: itemLoc) / 1000
+            let radiusMatch = distance <= radiusInKm
+            // Kategorie prüfen
+            let categoryMatch = selectedCategories.isEmpty || selectedCategories.contains(item.category.id)
+            return radiusMatch && categoryMatch
+        }
+        // Nach Entfernung sortieren
+        filteredItems.sort { item1, item2 in
+            let loc1 = CLLocation(latitude: item1.location.latitude, longitude: item1.location.longitude)
+            let loc2 = CLLocation(latitude: item2.location.latitude, longitude: item2.location.longitude)
+            return centerLocation.distance(from: loc1) < centerLocation.distance(from: loc2)
         }
     }
     
@@ -179,27 +202,29 @@ class MapViewModel: ObservableObject {
         selectedCategories.removeAll()
         radiusInKm = 5.0
     }
+    
+    // Geocode für Ortssuche
+    func geocodeAddress() {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(searchText) { [weak self] placemarks, error in
+            guard let self = self,
+                  let loc = placemarks?.first?.location else { return }
+            DispatchQueue.main.async {
+                self.searchLocation = loc.coordinate
+                // Region anpassen basierend auf Radius
+                let latDelta = self.radiusInKm / 110.0
+                let lonDelta = self.radiusInKm / (110.0 * cos(loc.coordinate.latitude * .pi / 180))
+                self.region = MKCoordinateRegion(
+                    center: loc.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: latDelta * 2, longitudeDelta: lonDelta * 2)
+                )
+                self.applyFilters()
+            }
+        }
+    }
 }
+
 struct AlertMessage: Identifiable {
     let id = UUID()
     let message: String
 }
-
-//class MapViewModel: ObservableObject {
-//    @Published var foodItems: [FoodItem] = []
-//    @Published var selectedItem: FoodItem?
-//    @Published var userLocation: Location?
-//    @Published var region: MKCoordinateRegion = MKCoordinateRegion()
-//    
-//    func fetchItemsForMap() {
-//        // Laden aller Lebensmittel für die Karte
-//    }
-//    
-//    func updateRegion() {
-//        // Aktualisieren der Kartenregion
-//    }
-//    
-//    func selectItem(_ item: FoodItem) {
-//        // Auswählen eines Items auf der Karte
-//    }
-//}

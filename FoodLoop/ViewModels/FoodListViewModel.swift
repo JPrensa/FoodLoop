@@ -172,7 +172,7 @@ class FoodListViewModel: ObservableObject {
                 return
             }
             
-            completion(!isSaved)
+            completion(true)
         }
     }
        

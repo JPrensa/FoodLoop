@@ -79,6 +79,9 @@ struct SavedItemsView: View {
             .onAppear {
                 loadSavedItems()
             }
+            .onChange(of: authViewModel.fireUser?.savedItems) { _ in
+                loadSavedItems()
+            }
             .alert(item: Binding<ErrorAlert?>(
                 get: {
                     foodListViewModel.errorMessage != nil ? ErrorAlert(message: foodListViewModel.errorMessage!) : nil
@@ -103,19 +106,24 @@ struct SavedItemsView: View {
     }
     
     private func removeSavedItem(_ item: FoodItem) {
-        // Lokale Aktualisierung der UI
-        if let index = foodListViewModel.savedItems.firstIndex(where: { $0.id == item.id }) {
-            foodListViewModel.savedItems.remove(at: index)
-        }
-        
-        // Aktualisierung in Firestore (falls implementiert)
-        if var user = authViewModel.fireUser {
-            // Entferne die ID aus der savedItems-Liste
-//            user.savedItems.removeAll(where: { $0 == item.id })
-            
-            // Speichere den aktualisierten Benutzer
-            // Hier müsstest du entweder eine Methode im AuthViewModel oder eine eigene Funktion haben
-            // z.B. authViewModel.updateUserProfile(user)
+        // Entfernen des Favoriten: Firestore & lokale UI
+        guard let user = authViewModel.fireUser else { return }
+        foodListViewModel.toggleSaveItem(item: item, user: user) { success in
+            DispatchQueue.main.async {
+                if success {
+                    // lokale Entfernung
+                    if let index = foodListViewModel.savedItems.firstIndex(where: { $0.id == item.id }) {
+                        foodListViewModel.savedItems.remove(at: index)
+                    }
+                    // aktualisiere AuthViewModel
+                    var updatedUser = user
+                    updatedUser.savedItems.removeAll(where: { $0 == item.id })
+                    authViewModel.fireUser = updatedUser
+                } else {
+                    // Fehlerbehandlung
+                    foodListViewModel.errorMessage = "Fehler beim Entfernen des Favoriten"
+                }
+            }
         }
     }
 }
