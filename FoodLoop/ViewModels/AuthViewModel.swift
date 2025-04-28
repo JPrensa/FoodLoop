@@ -9,6 +9,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
+@MainActor
 class AuthViewModel: ObservableObject {
     @Published var fireUser: FireUser?
     @Published var user: User?
@@ -135,7 +136,8 @@ class AuthViewModel: ObservableObject {
     }
 
     // Logout
-    func signOut() async {
+    @MainActor
+    func signOut() {
         self.isLoading = true
         self.errorMessage = nil
         do {
@@ -145,10 +147,10 @@ class AuthViewModel: ObservableObject {
             self.isLoading = false
         } catch {
             self.errorMessage = "Abmeldung fehlgeschlagen: \(error.localizedDescription)"
-            self.isLoading = false
         }
+            self.isLoading = false
     }
-
+    
     // Prüfen, ob ein User eingeloggt ist
     var isUserLoggedIn: Bool {
         return user != nil
