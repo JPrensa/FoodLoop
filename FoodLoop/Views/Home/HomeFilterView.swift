@@ -38,6 +38,7 @@ struct HomeFilterView: View {
                         } maximumValueLabel: {
                             Text("20km")
                         }
+                        .onChange(of: maxDistance) { _ in applyFilters() }
                         
                         Text("Maximale Entfernung: \(Int(maxDistance)) km")
                             .font(.subheadline)
@@ -49,7 +50,8 @@ struct HomeFilterView: View {
                 Section(header: Text("Kategorien")) {
                     ForEach(uniqueCategories, id: \.name) { category in
                         Button {
-                            toggleCategory(category.id)
+                            toggleCategory(category.name)
+                            applyFilters()
                         } label: {
                             HStack {
                                 Image(systemName: category.icon)
@@ -60,7 +62,7 @@ struct HomeFilterView: View {
                                 
                                 Spacer()
                                 
-                                if selectedCategories.contains(category.id) {
+                                if selectedCategories.contains(category.name) {
                                     Image(systemName: "checkmark")
                                         .foregroundColor(primaryColor)
                                 }
@@ -71,6 +73,7 @@ struct HomeFilterView: View {
                 
                 Section(header: Text("Weitere Optionen")) {
                     Toggle("Abgelaufene Lebensmittel anzeigen", isOn: $includeExpired)
+                        .onChange(of: includeExpired) { _ in applyFilters() }
                 }
                 
                 Section {
@@ -102,11 +105,11 @@ struct HomeFilterView: View {
         }
     }
     
-    private func toggleCategory(_ categoryId: String) {
-        if selectedCategories.contains(categoryId) {
-            selectedCategories.remove(categoryId)
+    private func toggleCategory(_ categoryName: String) {
+        if selectedCategories.contains(categoryName) {
+            selectedCategories.remove(categoryName)
         } else {
-            selectedCategories.insert(categoryId)
+            selectedCategories.insert(categoryName)
         }
     }
 }

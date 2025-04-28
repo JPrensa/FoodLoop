@@ -121,12 +121,12 @@ struct HomeView: View {
                 await viewModel.loadData()
             }
             .onChange(of: searchText) { newValue in
-                // Suchmodus setzen
+                // Suchmodus setzen und Suche ausführen
                 viewModel.isSearchMode = !newValue.isEmpty
-                
-                // Wenn Suchfeld geleert wird, Suchmodus beenden
                 if newValue.isEmpty {
                     viewModel.clearSearch()
+                } else {
+                    viewModel.searchFoodItems(query: newValue)
                 }
             }
             .alert(item: $viewModel.alertMessage) { alert in

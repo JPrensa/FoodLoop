@@ -9,17 +9,25 @@ struct FilterView: View {
     
     let primaryColor = Color("PrimaryGreen")
     
+    // Einmalige Kategorien nach Name
+    private var uniqueCategories: [FoodCategory] {
+        var seenNames = Set<String>()
+        return categories
+            .filter { seenNames.insert($0.name).inserted }
+            .sorted { $0.name < $1.name }
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
                 Section(header: Text("Entfernung")) {
                     VStack {
-                        Slider(value: $radiusInKm, in: 1...50, step: 1) {
+                        Slider(value: $radiusInKm, in: 1...20, step: 1) {
                             Text("Radius")
                         } minimumValueLabel: {
                             Text("1km")
                         } maximumValueLabel: {
-                            Text("50km")
+                            Text("20km")
                         }
                         
                         Text("Radius: \(Int(radiusInKm)) km")
@@ -30,7 +38,7 @@ struct FilterView: View {
                 }
                 
                 Section(header: Text("Kategorien")) {
-                    ForEach(categories) { category in
+                    ForEach(uniqueCategories) { category in
                         Button {
                             toggleCategory(category.id)
                         } label: {

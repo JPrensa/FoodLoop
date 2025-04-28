@@ -207,6 +207,17 @@ struct ProfileHeaderView: View {
     let user: FireUser?
     let rating: Double?
     
+    // Angezeigter Nutzername oder Gast <ID>
+    private var displayName: String {
+        guard let u = user else { return "Gast" }
+        let name = u.username
+        if !name.isEmpty && name.lowercased() != "neuer nutzer" {
+            return name
+        } else {
+            return "Gast \(u.id)"
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 16) {
             // Profilbild
@@ -249,7 +260,7 @@ struct ProfileHeaderView: View {
             
             // Name und Bewertung
             VStack(spacing: 8) {
-                Text(user?.username ?? "Benutzer")
+                Text(displayName)
                     .font(.title2)
                     .fontWeight(.bold)
                 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct FoodDetailView: View {
     let foodId: String
@@ -14,6 +15,22 @@ struct FoodDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     let primaryColor = Color("PrimaryGreen")
+    
+    // Angezeigter Name des Anbieters oder Gast <ID>
+    private var displayOwnerName: String {
+        if let owner = viewModel.owner {
+            let name = owner.username
+            if !name.isEmpty && name.lowercased() != "neuer nutzer" {
+                return name
+            } else {
+                return "Gast \(owner.id)"
+            }
+        } else if let food = viewModel.foodItem {
+            return "Gast \(food.ownerId)"
+        } else {
+            return "Gast"
+        }
+    }
     
     var body: some View {
         ScrollView {
@@ -24,18 +41,18 @@ struct FoodDetailView: View {
                         AsyncImage(url: url) { image in
                             image
                                 .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 250)
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
                                 .clipped()
                         } placeholder: {
                             Rectangle()
                                 .fill(Color.gray.opacity(0.3))
-                                .frame(height: 250)
+                                .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
                         }
                     } else {
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
-                            .frame(height: 250)
+                            .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
                     }
                     
                     // Favoriten-Button
@@ -45,6 +62,8 @@ struct FoodDetailView: View {
                             .padding(.trailing, 16)
                     }
                 }
+                .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
+                .clipped()
                 
                 VStack(alignment: .leading, spacing: 20) {
                     // Titel und Besitzer
@@ -53,12 +72,12 @@ struct FoodDetailView: View {
                             .font(.title)
                             .fontWeight(.bold)
                         
-                        if let owner = viewModel.owner {
+                        if let food = viewModel.foodItem {
                             HStack {
                                 Text("Angeboten von:")
                                     .foregroundColor(.secondary)
                                 
-                                Text(owner.username)
+                                Text(displayOwnerName)
                                     .fontWeight(.medium)
                             }
                             .font(.subheadline)
@@ -174,22 +193,43 @@ struct FoodDetailView: View {
                     
                     // Aktionsbuttons
                     HStack(spacing: 16) {
-                        Button {
-                            // Kontakt-Funktion
-                        } label: {
+                        if let foodItem = viewModel.foodItem, foodItem.isAvailable {
+                            Button {
+                                viewModel.reserveFood()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "checkmark.circle.fill")
+                                    Text("Reservieren")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(primaryColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                            }
+                        } else {
                             HStack {
-                                Image(systemName: "message.fill")
-                                Text("Kontakt")
+                                Image(systemName: "checkmark.circle.fill")
+                                Text("Reserviert")
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(primaryColor)
+                            .background(Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(10)
+                            .onLongPressGesture {
+                                viewModel.unreserveFood()
+                            }
                         }
-                        
+
                         Button {
-                            // Routenplanung
+                            if let location = viewModel.foodItem?.location {
+                                let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+                                let placemark = MKPlacemark(coordinate: coordinate)
+                                let mapItem = MKMapItem(placemark: placemark)
+                                mapItem.name = viewModel.foodItem?.title
+                                mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+                            }
                         } label: {
                             HStack {
                                 Image(systemName: "map.fill")

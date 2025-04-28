@@ -31,7 +31,7 @@ struct FilterBar: View {
             
             Button {
                 // Radius vergrößern
-                if radiusInKm < 50 {
+                if radiusInKm < 20 {
                     radiusInKm += 1
                 }
             } label: {

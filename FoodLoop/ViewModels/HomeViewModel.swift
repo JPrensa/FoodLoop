@@ -50,6 +50,7 @@ class HomeViewModel: ObservableObject {
     
     init() {
         setupLocationBinding()
+        locationService.requestLocationPermission()
     }
     
     private func setupLocationBinding() {
@@ -65,7 +66,7 @@ class HomeViewModel: ObservableObject {
                         }
                     } else if !self!.isLoading {
                         // Bei weiteren Aktualisierungen Entfernungen neu berechnen
-                        self?.sortItems()
+                        self?.filterAndSortItems()
                     }
                 }
             }
@@ -118,8 +119,9 @@ class HomeViewModel: ObservableObject {
             
             // Lebensmittel laden
             let foodItemsSnapshot = try await db.collection("foodItems")
-                .whereField("isAvailable", isEqualTo: true)
-               // .order(by: "createdAt", descending: true)
+                // Verfügbarkeitsfilter entfernt, damit reservierte Items nicht verschwinden
+                // .whereField("isAvailable", isEqualTo: true)
+                // .order(by: "createdAt", descending: true)
                 .getDocuments()
             
             
@@ -166,7 +168,8 @@ class HomeViewModel: ObservableObject {
         // Nach Kategorien filtern
         if !selectedCategories.isEmpty {
             filtered = filtered.filter { item in
-                selectedCategories.contains(item.category.name)
+                // Auswahl anhand der Kategorie-ID oder Name
+                selectedCategories.contains(item.category.id) || selectedCategories.contains(item.category.name)
             }
         }
         
@@ -246,14 +249,9 @@ class HomeViewModel: ObservableObject {
         
         isSearching = true
         
-        // Filter und Sortierung anwenden vor Suche
-        filterAndSortItems()
         let lowercaseQuery = query.lowercased()
-        // Suche nur in den nahen Items
-        searchResults = nearbyItems.filter { item in
-            item.title.lowercased().contains(lowercaseQuery) ||
-            item.description.lowercased().contains(lowercaseQuery) ||
-            item.category.name.lowercased().contains(lowercaseQuery)
+        searchResults = allItems.filter { item in
+            item.title.lowercased().contains(lowercaseQuery)
         }
         
         isSearching = false

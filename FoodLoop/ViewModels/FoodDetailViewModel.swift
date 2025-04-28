@@ -69,4 +69,45 @@ class FoodDetailViewModel: ObservableObject {
     func submitRating(stars: Double, comment: String?) {
         // Bewertung abgeben
     }
+
+    /// Reserviert das Lebensmittel und sendet eine Benachrichtigung an den Besitzer
+    func reserveFood() {
+        guard let foodItem = foodItem else { return }
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            DispatchQueue.main.async {
+                self.errorMessage = "Sie müssen angemeldet sein, um zu reservieren."
+            }
+            return
+        }
+        // Als reserviert markieren
+        database.collection("foodItems").document(foodItem.id).updateData(["isAvailable": false]) { error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Fehler beim Reservieren: \(error.localizedDescription)"
+                }
+                return
+            }
+            NotificationService.shared.sendReservationNotification(to: foodItem.ownerId, reserverId: currentUserId, foodItem: foodItem)
+            DispatchQueue.main.async {
+                // Lokal als reserviert markieren
+                self.foodItem?.isAvailable = false
+            }
+        }
+    }
+
+    /// Hebt die Reservierung auf und markiert das Item wieder verfügbar
+    func unreserveFood() {
+        guard let foodItem = foodItem else { return }
+        database.collection("foodItems").document(foodItem.id).updateData(["isAvailable": true]) { error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Fehler beim Aufheben der Reservierung: \(error.localizedDescription)"
+                }
+                return
+            }
+            DispatchQueue.main.async {
+                self.foodItem?.isAvailable = true
+            }
+        }
+    }
 }

@@ -45,7 +45,8 @@ struct MapView: View {
                     }
                 )
                 //.ignoresSafeArea(edges: .top)
-                .overlay(MapTypePickerView(mapStyle: $mapStyle))
+                // Karten-Typ Picker ausgeblendet
+                // .overlay(MapTypePickerView(mapStyle: $mapStyle))
                 
                 // Filter und Detailanzeigen als separater Overlay-Container
                 MapOverlaysView(viewModel: viewModel, primaryColor: primaryColor)
@@ -188,6 +189,3 @@ struct LoadingIndicatorOverlay: View {
         }
     }
 }
-
-
-//}

@@ -266,7 +266,7 @@ struct UploadView: View {
                             
                             // Upload-Button
                             Button {
-                                // Sicherstellen, dass wir die Standortdaten haben
+                                
                                 if viewModel.userLocation == nil {
                                     viewModel.requestLocation()
                                 }

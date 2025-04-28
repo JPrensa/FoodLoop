@@ -26,13 +26,14 @@ struct FoodCardView: View {
                         Rectangle()
                             .foregroundColor(.gray.opacity(0.3))
                     }
-                    .frame(height: 120)
+                    // Feste Bildgröße, um gleiche Abmessungen sicherzustellen
+                    .frame(width: 160, height: 120)
                     .clipped()
                     .cornerRadius(8)
                 } else {
                     Rectangle()
                         .foregroundColor(.gray.opacity(0.3))
-                        .frame(height: 120)
+                        .frame(width: 160, height: 120)
                         .cornerRadius(8)
                 }
                 
@@ -62,7 +63,8 @@ struct FoodCardView: View {
                     Image(systemName: "location.circle")
                         .font(.caption2)
                     
-                    Text(formatDistance(for: item))
+                    Text(item.location.distanceToCurrentLocation())
+                  //  Text(formatDistance(for: item))
                         .font(.caption2)
                 }
                 .foregroundColor(.gray)
@@ -85,9 +87,5 @@ struct FoodCardView: View {
         return date < Date()
     }
     
-    private func formatDistance(for item: FoodItem) -> String {
-        // Diese Funktion würde normalerweise die Entfernung zum Benutzerstandort berechnen
-        // Für dieses Beispiel geben wir einen Platzhalter zurück
-        return "ca. 2 km"
-    }
+
 }

@@ -176,37 +176,6 @@ class FoodListViewModel: ObservableObject {
         }
     }
        
-//       func toggleSaveItem(item: FoodItem, user: FireUser?, completion: @escaping (Bool) -> Void) {
-//           guard let user = user, var savedItems = user.savedItems else {
-//               completion(false)
-//               return
-//           }
-//           
-//           
-//           let isSaved = savedItems.contains(item.id)
-//           
-//           if isSaved {
-//               
-//               savedItems.removeAll(where: { $0 == item.id })
-//           } else {
-//               
-//               savedItems.append(item.id)
-//           }
-//           
-//           
-//           db.collection("users").document(user.id).updateData([
-//               "savedItems": savedItems
-//           ]) { error in
-//               if let error = error {
-//                   print("Fehler beim Aktualisieren der gespeicherten Elemente: \(error.localizedDescription)")
-//                   completion(false)
-//                   return
-//               }
-//               
-//               completion(!isSaved)
-//           }
-//       }
-       
        
        func isItemSaved(itemId: String, user: FireUser?) -> Bool {
            guard let savedItems = user?.savedItems else {
