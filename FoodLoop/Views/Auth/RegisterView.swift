@@ -94,8 +94,7 @@ struct RegisterView: View {
                             let enteredUsername = username
                             await authViewModel.register(email: email, password: password)
                             if let user = authViewModel.user {
-                                                            // Hier könnte man auch noch eine updateUserProfile-Methode aufrufen
-                                                            // um den Benutzernamen zu setzen, falls die Registrierung erfolgreich war
+                                                            
                                                         }
                         }
                     } label: {

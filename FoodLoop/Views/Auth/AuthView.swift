@@ -29,9 +29,10 @@ struct AuthView: View {
                 VStack(spacing: 30) {
                     // Logo und Titel
                     VStack(spacing: 16) {
-                        Image(systemName: "leaf.fill")
-                            .font(.system(size: 70))
-                            .foregroundColor(primaryColor)
+                        Image("App Logo")
+                            .resizable()
+                            .frame(width: 150, height: 150)
+                            
                         
                         Text("Food Loop")
                             .font(.largeTitle)
@@ -119,26 +120,26 @@ struct AuthView: View {
                     // Alternative Anmeldemethoden
                     VStack(spacing: 16) {
                         // Google-Anmeldung (Platzhalter, da nicht implementiert)
-                        Button {
-                            // Google-Anmeldung ausführen
-                        } label: {
-                            HStack {
-                                Image(systemName: "g.circle.fill")
-                                    .font(.title3)
-                                
-                                Text("Mit Google fortfahren")
-                                    .fontWeight(.medium)
-                            }
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                        }
+//                        Button {
+//                            // Google-Anmeldung ausführen
+//                        } label: {
+//                            HStack {
+//                                Image(systemName: "g.circle.fill")
+//                                    .font(.title3)
+//                                
+//                                Text("Mit Google fortfahren")
+//                                    .fontWeight(.medium)
+//                            }
+//                            .foregroundColor(.primary)
+//                            .frame(maxWidth: .infinity)
+//                            .padding()
+//                            .background(Color.white)
+//                            .cornerRadius(12)
+//                            .overlay(
+//                                RoundedRectangle(cornerRadius: 12)
+//                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+//                            )
+//                        }
                         
                         // Anonyme Anmeldung
                         Button {
