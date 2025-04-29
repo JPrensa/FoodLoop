@@ -94,7 +94,6 @@ struct RegisterView: View {
                             let enteredUsername = username
                             await authViewModel.register(email: email, password: password)
                             if let user = authViewModel.user {
-                                                            
                                                         }
                         }
                     } label: {

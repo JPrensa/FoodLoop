@@ -22,20 +22,14 @@ class AuthViewModel: ObservableObject {
         Task {
             await checkIfUserExists()
             if let currentUser = Auth.auth().currentUser {
-                // Lade FireUser-Daten aus Firestore
+
                 fetchUser(id: currentUser.uid)
             } else {
-                // Wenn kein eingeloggter User, anonym anmelden für Firestore-Lesezugriff
                 await signInAnonymously()
             }
         }
     }
   
-    
-    
-    
-    
-    
     func createUser(id: String, email: String?, username: String = "Neuer Nutzer") async {
             let newUser = FireUser(
                 id: id,

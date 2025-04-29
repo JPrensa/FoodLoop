@@ -9,7 +9,7 @@ struct FilterView: View {
     
     let primaryColor = Color("PrimaryGreen")
     
-    // Einmalige Kategorien nach Name
+    
     private var uniqueCategories: [FoodCategory] {
         var seenNames = Set<String>()
         return categories

@@ -26,7 +26,7 @@ struct FoodCardView: View {
                         Rectangle()
                             .foregroundColor(.gray.opacity(0.3))
                     }
-                    // Feste Bildgröße, um gleiche Abmessungen sicherzustellen
+                    
                     .frame(width: 160, height: 120)
                     .clipped()
                     .cornerRadius(8)
@@ -64,7 +64,6 @@ struct FoodCardView: View {
                         .font(.caption2)
                     
                     Text(item.location.distanceToCurrentLocation())
-                  //  Text(formatDistance(for: item))
                         .font(.caption2)
                 }
                 .foregroundColor(.gray)

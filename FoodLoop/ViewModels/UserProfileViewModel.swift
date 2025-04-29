@@ -155,7 +155,27 @@ var isUserLoggedIn: Bool {
     }
     
     func fetchUserProfile() {
-        // Laden des Nutzerprofils
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        database.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Fehler beim Laden des Profils: \(error.localizedDescription)")
+                self.errorMessage = error.localizedDescription
+                return
+            }
+            guard let document = document, document.exists else {
+                print("Benutzerprofil nicht gefunden")
+                return
+            }
+            do {
+                let user = try document.data(as: FireUser.self)
+                DispatchQueue.main.async {
+                    self.fireUser = user
+                    self.foodsSaved = user.foodsSaved
+                }
+            } catch {
+                print("Fehler beim Dekodieren des Profils: \(error.localizedDescription)")
+            }
+        }
     }
     
     func updateUserPreferences(_ preferences: [FoodCategory]) {
